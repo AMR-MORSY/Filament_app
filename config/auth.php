@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Patient;
 use App\Models\User;
 
 return [
@@ -42,6 +43,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'patient' => [
+            'driver' => 'session',
+            'provider' => 'patients',
+        ],
     ],
 
     /*
@@ -67,10 +72,12 @@ return [
             'model' => env('AUTH_MODEL', User::class),
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'patients' => [
+            'driver' => 'eloquent',
+            'model' => env('PATIENT_MODEL', Patient::class),
+        ],
+
+        
     ],
 
     /*
@@ -96,6 +103,12 @@ return [
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+        'patients' => [
+            'provider' => 'patients',
+            'table' => env('PATIENT_PASSWORD_RESET_TOKEN_TABLE', 'patient_password_reset_tokens'),
             'expire' => 60,
             'throttle' => 60,
         ],
