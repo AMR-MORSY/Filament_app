@@ -216,6 +216,13 @@
             </main>
         </div>
 
+        <div x-data="{ open: true }">
+            <div x-data="{ label: 'Content:' }">
+                <span x-text="label"></span>
+                <span x-text="1 + 2"></span>
+            </div>
+        </div>
+
         @if (Route::has('login'))
             <div class="h-14.5 hidden lg:block"></div>
         @endif

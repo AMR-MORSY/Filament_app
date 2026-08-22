@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 class Appointment extends Model
@@ -20,12 +21,17 @@ class Appointment extends Model
         'status',
         'notes',
         'admin_notes',
+        'created_by', 'booked_via'
     ];
     protected $casts = [
         'appointment_date' => 'date',
-        'start_time' => 'time',
-        'end_time' => 'time',
+        // 'start_time' => 'time',
+        // 'end_time' => 'time',
     ];
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
     public function clinic()
     {
         return $this->belongsTo(Clinic::class);
@@ -38,4 +44,5 @@ class Appointment extends Model
     {
         return $this->belongsTo(Patient::class);
     }
+ 
 }

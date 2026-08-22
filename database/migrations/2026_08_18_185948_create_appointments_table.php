@@ -17,6 +17,11 @@ return new class extends Migration
             $table->foreignId('doctor_id')->constrained()->cascadeOnDelete();
 
             $table->foreignId('patient_id')->nullable()->constrained('patients')->nullOnDelete();
+
+            $table->foreignId('created_by')
+            ->nullable()
+            ->constrained('users')
+            ->nullOnDelete();
             $table->string('guest_name')->nullable();
             $table->string('guest_phone')->nullable();
             $table->string('guest_email')->nullable();
@@ -27,6 +32,7 @@ return new class extends Migration
 
             $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed', 'no_show'])
                 ->default('pending');
+            $table->enum(' booked_via', ['patient_self', 'staff', 'guest'])->default('guest');
             $table->text('notes')->nullable();
             $table->text('admin_notes')->nullable();
             $table->timestamps();

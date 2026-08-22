@@ -25,6 +25,11 @@ class Doctor extends Model
         return $this->hasMany(DoctorSchedule::class);
     }
 
+    public function appointments():HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
     public function exceptions(): HasMany
     {
         return $this->hasMany(ScheduleException::class);
