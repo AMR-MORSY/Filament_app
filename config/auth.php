@@ -108,7 +108,7 @@ return [
         ],
         'patients' => [
             'provider' => 'patients',
-            'table' => env('PATIENT_PASSWORD_RESET_TOKEN_TABLE', 'patient_password_reset_tokens'),
+            'table' => env('PATIENT_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
             'expire' => 60,
             'throttle' => 60,
         ],
