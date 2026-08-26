@@ -2,16 +2,18 @@
 
 namespace App\Models;
 
-use Illuminate\Auth\Passwords\CanResetPassword;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
 
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 
-class Patient extends  Authenticatable implements CanResetPasswordContract
+class Patient extends  Authenticatable implements CanResetPasswordContract,MustVerifyEmail
 {
-    use HasFactory, Notifiable, CanResetPassword;
+    use HasFactory, Notifiable,MustVerifyEmailTrait;
     protected $fillable = [
         'name',
         'email',

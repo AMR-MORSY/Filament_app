@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Patient;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,6 +33,7 @@ class RegisterController extends Controller
 
 
 
+        event(new Registered($user));
         Auth::guard('patient')->login($user);
 
 

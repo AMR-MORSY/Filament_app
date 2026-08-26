@@ -4,11 +4,14 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
 use App\Models\Patient;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+
 
 Route::middleware('guest:patient')->group(function () {
     Route::get('/login', function () {
@@ -22,7 +25,7 @@ Route::middleware('guest:patient')->group(function () {
     Route::post('/register', [RegisterController::class, 'register'])->name('auth.register.submit');
 
     ////////////////////Password-Reset-Routes///////////////////////////////////////////////////////////////////
-    
+
     Route::get('/forgot-password', function () {
         return view('auth.forgot-password');
     })->name('password.request');
@@ -45,27 +48,43 @@ Route::middleware('guest:patient')->group(function () {
 
 
     Route::post('/patient/reset-password', function (Request $request) {
-    $request->validate([
-        'token' => 'required',
-        'email' => 'required|email',
-        'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()->mixedCase()->symbols()]
-    ]);
- 
-    $status = Password::reset(
-        $request->only('email', 'password', 'password_confirmation', 'token'),
-        function (Patient $patient, string $password) {
-            $patient->forceFill([
-                'password' => Hash::make($password)
-            ])->setRememberToken(Str::random(60));
- 
-            $patient->save();
- 
-            event(new PasswordReset($patient));
-        }
-    );
- 
-    return $status === Password::PasswordReset
-        ? redirect()->route('login')->with('status', __($status))
-        : back()->withErrors(['email' => [__($status)]]);
-})->name('patient.password.update');
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()->mixedCase()->symbols()]
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (Patient $patient, string $password) {
+                $patient->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(Str::random(60));
+
+                $patient->save();
+
+                event(new PasswordReset($patient));
+            }
+        );
+
+        return $status === Password::PasswordReset
+            ? redirect()->route('login')->with('status', __($status))
+            : back()->withErrors(['email' => [__($status)]]);
+    })->name('patient.password.update');
+});
+
+/////////////////////////////////////////////////////////////Email Verification//////////////////////////////////////////////
+Route::middleware('auth:patient')->group(function () {
+
+    Route::get('/email/verify', function () {
+        return view('auth.verify-email');
+    })->name('verification.notice'); ///It is important that the route is assigned this exact name since the verified middleware included with Laravel will automatically redirect to this route name if a user has not verified their email address.
+
+    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+        $request->fulfill();
+
+        return redirect('/home');
+    })->middleware(['auth', 'signed'])->name('verification.verify');
+
+    
 });
