@@ -59,6 +59,13 @@ return [
             'throw' => false,
             'report' => false,
         ],
+        'doctors' => [
+        'driver' => 'local',
+        'root' => public_path('images/doctors'),
+        'url' => env('APP_URL') . '/images/doctors',
+        'visibility' => 'public',
+        'throw' => false,
+    ],
 
     ],
 

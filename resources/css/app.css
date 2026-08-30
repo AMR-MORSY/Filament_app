@@ -1,9 +1,43 @@
 @import 'tailwindcss';
 @plugin "daisyui";
+@plugin "daisyui/theme" {
+    /* name: 'clinic';
+    default: true;
+    prefersdark: false;
+    color-scheme: light;
+    --color-base-100: #fbfaf7;
+    --color-base-200: #f2f1ec;
+    --color-base-300: #e6e4dd;
+    --color-base-content: #22201d;
+    --color-primary: #167c74;
+    --color-primary-content: #ffffff;
+    --color-secondary: #22201d;
+    --color-secondary-content: #ffffff;
+    --color-accent: #167c74;
+    --color-accent-content: #ffffff;
+    --color-neutral: #22201d;
+    --color-neutral-content: #fbfaf7;
+    --color-info: #0e7490;
+    --color-info-content: #ffffff;
+    --color-success: #167c74;
+    --color-success-content: #ffffff;
+    --color-warning: #b08900;
+    --color-warning-content: #ffffff;
+    --color-error: #c0392b;
+    --color-error-content: #ffffff;
+    --radius-box: 0.75rem;
+    --radius-field: 0.5rem;
+    --radius-selector: 0.5rem; */
+}
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+
+body {
+  background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
 }

@@ -21,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Customize the password reset URL for patients
         ResetPassword::createUrlUsing(function ($notifiable, string $token) {
         $routeName = $notifiable instanceof Patient
             ? 'patient.password.reset'

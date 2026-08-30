@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 
 class DoctorsTable
 {
@@ -16,23 +17,26 @@ class DoctorsTable
         return $table
             ->columns([
                 //
+                SpatieMediaLibraryImageColumn::make('avatar')
+                ->collection('main_image')
+                    ->conversion('thumb'),
                 TextColumn::make('name')
-                ->searchable()
-                ->sortable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('specialty')
-                ->searchable()
-                ->sortable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('bio')
-                ->searchable()
-                ->sortable()
-                ->toggleable(isToggledHiddenByDefault: true),
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('email')
-                ->searchable()
-                ->sortable(),
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('phone')
-                ->searchable()
-                ->sortable(),
-              
+                    ->searchable()
+                    ->sortable(),
+
                 IconColumn::make('is_active')
                     ->boolean()
                     ->sortable(),

@@ -17,10 +17,10 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::guard('patient')->attempt($credentials)) {
+        if (Auth::guard('patient')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            return redirect()->intended('home');
+            return redirect()->intended(route('home'));
         }
 
         return back()->withErrors([

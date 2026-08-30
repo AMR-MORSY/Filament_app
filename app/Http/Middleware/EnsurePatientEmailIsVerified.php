@@ -19,7 +19,7 @@ class EnsurePatientEmailIsVerified
         $patient= $request->user('patient');//////guard patient
         
         if(!$patient ||($patient instanceof MustVerifyEmail && !$patient->hasVerifiedEmail())){
-            return redirect()->route('patient.verification.notice');
+            return redirect()->route('verification.notice');
         }
         return $next($request);
     }

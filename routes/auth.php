@@ -4,7 +4,6 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
 use App\Models\Patient;
 use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -68,10 +67,14 @@ Route::middleware('guest:patient')->group(function () {
         );
 
         return $status === Password::PasswordReset
-            ? redirect()->route('login')->with('status', __($status))
+            ? redirect()->route('auth.login')->with('status', __($status))
             : back()->withErrors(['email' => [__($status)]]);
     })->name('patient.password.update');
 });
+
+Route::post('/logout', [LoginController::class, 'logout'])
+    ->middleware('auth:patient')
+    ->name('auth.logout');
 
 /////////////////////////////////////////////////////////////Email Verification//////////////////////////////////////////////
 Route::middleware('auth:patient')->group(function () {
@@ -80,11 +83,29 @@ Route::middleware('auth:patient')->group(function () {
         return view('auth.verify-email');
     })->name('verification.notice'); ///It is important that the route is assigned this exact name since the verified middleware included with Laravel will automatically redirect to this route name if a user has not verified their email address.
 
-    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-        $request->fulfill();
+    Route::post('/email/verification-notification', function (Request $request) {
+        $request->user('patient')->sendEmailVerificationNotification();
 
-        return redirect('/home');
-    })->middleware(['auth', 'signed'])->name('verification.verify');
+        return back()->with('status', 'verification-link-sent');
+    })->middleware('throttle:6,1')->name('verification.send');
 
-    
+    // Not using Illuminate\Foundation\Auth\EmailVerificationRequest here: it resolves
+    // $request->user() against the default ("web") guard, not the "patient" guard.
+    Route::get('/email/verify/{id}/{hash}', function (Request $request) {
+        $patient = $request->user('patient');
+
+        abort_unless(
+            hash_equals((string) $request->route('id'), (string) $patient->getKey())
+                && hash_equals((string) $request->route('hash'), sha1($patient->getEmailForVerification())),
+            403
+        );
+
+        if (! $patient->hasVerifiedEmail()) {
+            $patient->markEmailAsVerified();
+        }
+
+        return redirect()->route('home');
+    })->middleware('signed')->name('verification.verify');
+
+
 });

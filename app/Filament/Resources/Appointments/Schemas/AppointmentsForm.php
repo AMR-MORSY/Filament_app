@@ -7,6 +7,7 @@ use App\Models\Doctor;
 use App\Services\AvailabilityService;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -15,7 +16,7 @@ use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
-
+use Illuminate\Database\Eloquent\Model;
 
 class AppointmentsForm
 {
@@ -30,6 +31,9 @@ class AppointmentsForm
                     ->preload()
                     ->live()
                     ->afterStateUpdated(fn(callable $set) => $set('doctor_id', null)),
+
+                Hidden::make('created_by')
+                    ->default(fn() => auth('web')->user()?->id),
 
                 Select::make('doctor_id')
                     ->relationship(
@@ -76,10 +80,16 @@ class AppointmentsForm
                     ->format('Y-m-d')
                     ->label('Appointment Date')
                     ->required()
+                    ->live()
                     ->afterStateUpdated(fn(callable $set) => $set('start_time', null)), // reset slot when date changes,
                 select::make('start_time')
                     ->label('Available Slots')
-                    ->options(function (callable $get) {
+                    ->afterStateHydrated(function (Select $component, $state) {
+                        if (filled($state)) {
+                            $component->state(Carbon::parse($state)->format('H:i'));
+                        }
+                    })
+                    ->options(function (callable $get, ?Model $record) {
                         $doctorId = $get('doctor_id');
                         $date = $get('appointment_date');
 
@@ -89,26 +99,28 @@ class AppointmentsForm
 
                         $doctor = Doctor::find($doctorId);
                         $slots = app(AvailabilityService::class)
-                            ->getAvailableSlots($doctor, Carbon::parse($date));
+                            ->getAvailableSlots($doctor, Carbon::parse($date), ignoreAppointmentId: $record?->id);
 
-                        return $slots->mapWithKeys(fn(string $slot) => [
+                        $options = $slots->mapWithKeys(fn(string $slot) => [
                             $slot => Carbon::parse($slot)->format('h:i A'),
                         ]);
-                    })
-                    // ->rule(function ($get) {
-                    //     return function (string $attribute, $value, \Closure $fail) use ($get) {
-                    //         $doctor = Doctor::find($get('doctor_id'));
-                    //         $date = $get('appointment_date');
-                    //         if (! $doctor || ! $date) {
-                    //             return;
-                    //         }
 
-                    //         $service = app(AvailabilityService::class);
-                    //         if (! $service->isSlotAvailable($doctor, Carbon::parse($date), $value)) {
-                    //             $fail('This time slot is not available for the selected doctor.');
-                    //         }
-                    //     };
-                    // })
+                        // Belt-and-suspenders: if the appointment's own slot somehow still isn't
+                        // in the list (e.g. schedule changed since booking), add it back explicitly
+                        // and flag it, rather than leaving the field unselected.
+                        if ($record && $record->start_time) {
+                            $currentSlot = Carbon::parse($record->start_time)->format('H:i');
+
+                            if (! $options->has($currentSlot)) {
+                                $options->put(
+                                    $currentSlot,
+                                    Carbon::parse($currentSlot)->format('h:i A') . ' (currently booked)'
+                                );
+                            }
+                        }
+
+                        return $options->sortKeys();
+                    })
 
                     ->live()
                     ->required()
@@ -116,34 +128,31 @@ class AppointmentsForm
                     ->helperText(fn(callable $get) => blank($get('doctor_id')) || blank($get('appointment_date'))
                         ? 'Select a clinic, doctor, and date first.'
                         : null)
-                        ->afterStateUpdated(function (callable $get, callable $set) {
-                            $doctor = Doctor::find($get('doctor_id'));
-                            $date = $get('appointment_date');
-                            $startTime = $get('start_time');
-                    
-                            if ($doctor && $date && $startTime) {
-                                $slotDuration = $doctor->schedules()
-                                    ->where('day_of_week', Carbon::parse($date)->dayOfWeek)
-                                    ->where('is_active', true)
-                                    ->value('slot_duration') ?? 30;
-                    
-                                $set('end_time', Carbon::parse($startTime)->addMinutes($slotDuration)->format('H:i'));
-                            }
-                        }),
+                    ->afterStateUpdated(function (callable $get, callable $set) {
+                        $doctor = Doctor::find($get('doctor_id'));
+                        $date = $get('appointment_date');
+                        $startTime = $get('start_time');
+
+                        if ($doctor && $date && $startTime) {
+                            $slotDuration = $doctor->schedules()
+                                ->where('day_of_week', Carbon::parse($date)->dayOfWeek)
+                                ->where('is_active', true)
+                                ->value('slot_duration') ?? 30;
+
+                            $set('end_time', Carbon::parse($startTime)->addMinutes($slotDuration)->format('H:i'));
+                        }
+                    }),
                 TimePicker::make('end_time')
                     ->label('End Time')
-                    ->required()   ->disabled()
+                    ->required()->disabled()
                     ->dehydrated(),
                 Textarea::make('notes')
-                    ->label('Notes')
-                   ,
+                    ->label('Notes'),
                 Textarea::make('admin_notes')
-                    ->label('Admin Notes')
-                   ,
+                    ->label('Admin Notes'),
                 Select::make('status')
                     ->label('Status')
-                    ->options(AppointmentEnums::class)
-                    ->required(),
+                    ->options(AppointmentEnums::class),
             ]);
     }
 }

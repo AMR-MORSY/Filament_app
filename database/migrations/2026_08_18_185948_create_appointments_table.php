@@ -32,7 +32,7 @@ return new class extends Migration
 
             $table->enum('status', ['pending', 'confirmed', 'cancelled', 'completed', 'no_show'])
                 ->default('pending');
-            $table->enum(' booked_via', ['patient_self', 'staff', 'guest'])->default('guest');
+            $table->enum('booked_via', ['patient_self', 'staff', 'guest'])->default('guest');
             $table->text('notes')->nullable();
             $table->text('admin_notes')->nullable();
             $table->timestamps();

@@ -17,15 +17,15 @@ class CreatorRelationManager extends RelationManager
 {
     protected static string $relationship = 'creator';
 
-    public function form(Schema $schema): Schema
-    {
-        return $schema
-            ->components([
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-            ]);
-    }
+    // public function form(Schema $schema): Schema
+    // {
+    //     return $schema
+    //         ->components([
+    //             TextInput::make('name')
+    //                 ->required()
+    //                 ->maxLength(255),
+    //         ]);
+    // }
 
     public function table(Table $table): Table
     {
@@ -34,21 +34,12 @@ class CreatorRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('name')
                     ->searchable(),
+                TextColumn::make('email')
+                    ->searchable(),
             ])
             ->filters([
                 //
             ])
-            ->headerActions([
-                CreateAction::make(),
-            ])
-            ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ]);
+        ;
     }
 }

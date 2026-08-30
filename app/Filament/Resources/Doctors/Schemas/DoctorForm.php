@@ -6,7 +6,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
-
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 class DoctorForm
 {
     public static function configure(Schema $schema): Schema
@@ -16,6 +16,10 @@ class DoctorForm
                 TextInput::make('name')
                     ->required()
                     ->maxLength(255),
+                    SpatieMediaLibraryFileUpload::make('avatar')
+                        ->collection('main_image')
+                        ->multiple(false)
+                        ->maxFiles(1),
                 TextInput::make('specialty')
                     ->required()
                     ->maxLength(255),
@@ -28,9 +32,7 @@ class DoctorForm
                 TextInput::make('email')
                     ->required()
                     ->maxLength(255),
-                TextInput::make('photo')
-                    ->required()
-                    ->maxLength(255),
+              
                 Toggle::make('is_active')
                     ->default(true),
                     Select::make('clinic_id')

@@ -17,7 +17,7 @@ class AvailabilityService
      * @return Collection<int, string> e.g. ["09:00", "09:30", "10:00"]
      */
 
-    public function getAvailableSlots(Doctor $doctor, Carbon $date): Collection
+    public function getAvailableSlots(Doctor $doctor, Carbon $date,?int $ignoreAppointmentId = null): Collection
     {
 
         // 1. Check for a date-specific exception first (overrides weekly schedule)
@@ -59,6 +59,7 @@ class AvailabilityService
         $bookedTimes = $doctor->appointments()
             ->whereDate('appointment_date', $date->toDateString()) ////toDateString() it is a carbon instance function
             ->whereNotIn('status', ['cancelled', 'no_show'])
+            ->when($ignoreAppointmentId, fn ($query) => $query->where('id', '!=', $ignoreAppointmentId))////ignore the appointment id if it is passed, this is useful when we are editing an existing appointment and we want to ignore the current appointment from the booked times
             ->pluck('start_time')
             ->map(fn($time) => Carbon::parse($time)->format('H:i'))
             ->toArray();
@@ -93,7 +94,7 @@ class AvailabilityService
     }
 
 
-    public function isSlotAvailable(Doctor $doctor, Carbon $date, string $startTime)
+    public function isSlotAvailable(Doctor $doctor, Carbon $date, string $startTime, ?int $ignoreAppointmentId = null)
     {
         return $this->getAvailableSlots($doctor, $date)->contains($startTime);
 

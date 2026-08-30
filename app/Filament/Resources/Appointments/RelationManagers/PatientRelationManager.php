@@ -17,15 +17,15 @@ class PatientRelationManager extends RelationManager
 {
     protected static string $relationship = 'patient';
 
-    public function form(Schema $schema): Schema
-    {
-        return $schema
-            ->components([
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-            ]);
-    }
+    // public function form(Schema $schema): Schema
+    // {
+    //     return $schema
+    //         ->components([
+    //             TextInput::make('name')
+    //                 ->required()
+    //                 ->maxLength(255),
+    //         ]);
+    // }
 
     public function table(Table $table): Table
     {
@@ -36,21 +36,12 @@ class PatientRelationManager extends RelationManager
                     ->searchable(),
                     TextColumn::make('phone')
                     ->searchable(),
+                    TextColumn::make('email')
+                    ->searchable(),
             ])
             ->filters([
                 //
             ])
-            ->headerActions([
-                CreateAction::make(),
-            ])
-            ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ]);
+           ;
     }
 }
