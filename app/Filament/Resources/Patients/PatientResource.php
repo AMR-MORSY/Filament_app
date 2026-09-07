@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Patients;
 
-use App\Filament\Resources\Patients\Pages\CreatePatient;
 use App\Filament\Resources\Patients\Pages\EditPatient;
 use App\Filament\Resources\Patients\Pages\ListPatients;
 use App\Filament\Resources\Patients\RelationManagers\AppointmentsRelationManager;
@@ -40,11 +39,22 @@ class PatientResource extends Resource
         ];
     }
 
+    /**
+     * Patients create their own accounts on the public site. There is no
+     * legitimate reason for staff to create one, so the page is gone and this
+     * closes the door regardless of what the Shield permission says.
+     */
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
     public static function getPages(): array
     {
         return [
             'index' => ListPatients::route('/'),
-            'create' => CreatePatient::route('/create'),
+            // No 'create' route. 'edit' is kept only as the surface for booking
+            // on a patient's behalf — see PatientForm, which renders no fields.
             'edit' => EditPatient::route('/{record}/edit'),
         ];
     }

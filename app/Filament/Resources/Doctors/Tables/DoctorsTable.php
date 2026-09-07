@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Doctors\Tables;
 
+use App\Support\PhoneNumber;
+
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -34,6 +36,7 @@ class DoctorsTable
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('phone')
+                    ->formatStateUsing(fn (?string $state): ?string => PhoneNumber::forDisplay($state))
                     ->searchable()
                     ->sortable(),
 

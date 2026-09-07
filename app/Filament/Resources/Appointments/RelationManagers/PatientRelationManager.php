@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Appointments\RelationManagers;
 
+use App\Support\PhoneNumber;
+
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -35,6 +37,7 @@ class PatientRelationManager extends RelationManager
                 TextColumn::make('name')
                     ->searchable(),
                     TextColumn::make('phone')
+                    ->formatStateUsing(fn (?string $state): ?string => PhoneNumber::forDisplay($state))
                     ->searchable(),
                     TextColumn::make('email')
                     ->searchable(),

@@ -3,14 +3,15 @@
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
 use App\Models\Patient;
+use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Auth\Events\PasswordReset;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
-
 
 Route::middleware('guest:patient')->group(function () {
     Route::get('/login', function () {
@@ -23,11 +24,18 @@ Route::middleware('guest:patient')->group(function () {
     })->name('auth.register');
     Route::post('/register', [RegisterController::class, 'register'])->name('auth.register.submit');
 
-    ////////////////////Password-Reset-Routes///////////////////////////////////////////////////////////////////
+    /*
+    |--------------------------------------------------------------------------
+    | Patient password reset  (guard: patient, broker: patients)
+    |--------------------------------------------------------------------------
+    */
 
     Route::get('/forgot-password', function () {
-        return view('auth.forgot-password');
-    })->name('password.request');
+        return view('auth.forgot-password', [
+            'submitRoute' => 'patient.password.email',
+            'loginRoute' => 'auth.login',
+        ]);
+    })->name('patient.password.request');
 
     Route::post('/forgot-password', function (Request $request) {
         $request->validate(['email' => 'required|email']);
@@ -39,25 +47,30 @@ Route::middleware('guest:patient')->group(function () {
         return $status === Password::ResetLinkSent
             ? back()->with(['status' => __($status)])
             : back()->withErrors(['email' => __($status)]);
-    })->name('password.email');
+    })->name('patient.password.email');
 
     Route::get('/patient/reset-password/{token}', function (string $token) {
-        return view('auth.reset-password', ['token' => $token]);
+        return view('auth.reset-password', [
+            'token' => $token,
+            'submitRoute' => 'patient.password.update',
+            'loginRoute' => 'auth.login',
+        ]);
     })->name('patient.password.reset');
-
 
     Route::post('/patient/reset-password', function (Request $request) {
         $request->validate([
             'token' => 'required',
             'email' => 'required|email',
-            'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()->mixedCase()->symbols()]
+            'password' => ['required', 'confirmed', PasswordRule::min(8)->letters()->numbers()->mixedCase()->symbols()],
         ]);
 
-        $status = Password::reset(
+        // Must be the patients broker. Using the default (users) broker looked the
+        // email up in the staff table, so no patient could ever complete a reset.
+        $status = Password::broker('patients')->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (Patient $patient, string $password) {
                 $patient->forceFill([
-                    'password' => Hash::make($password)
+                    'password' => Hash::make($password),
                 ])->setRememberToken(Str::random(60));
 
                 $patient->save();
@@ -70,6 +83,82 @@ Route::middleware('guest:patient')->group(function () {
             ? redirect()->route('auth.login')->with('status', __($status))
             : back()->withErrors(['email' => [__($status)]]);
     })->name('patient.password.update');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Staff password reset  (guard: web, broker: users)
+|--------------------------------------------------------------------------
+|
+| Deliberately NOT scoped to a Filament panel. Choosing a password is an
+| identity operation; which panel someone may enter is an authorization
+| question, enforced at login by User::canAccessPanel(). Tying the two
+| together meant a role change between invitation and reset silently
+| invalidated the link, reported as though the account did not exist.
+|
+| No guest middleware either: an already-signed-in user following an
+| invitation link should see the form, not be bounced to a dashboard.
+*/
+Route::prefix('staff')->group(function () {
+    Route::get('/forgot-password', function () {
+        return view('auth.forgot-password', [
+            'submitRoute' => 'password.email',
+            'loginRoute' => 'filament.admin.auth.login',
+        ]);
+    })->name('password.request');
+
+    Route::post('/forgot-password', function (Request $request) {
+        $request->validate(['email' => 'required|email']);
+
+        $status = Password::broker('users')->sendResetLink(
+            $request->only('email')
+        );
+
+        return $status === Password::ResetLinkSent
+            ? back()->with(['status' => __($status)])
+            : back()->withErrors(['email' => __($status)]);
+    })->name('password.email');
+
+    Route::get('/reset-password/{token}', function (string $token) {
+        return view('auth.reset-password', [
+            'token' => $token,
+            'submitRoute' => 'password.update',
+            'loginRoute' => 'filament.admin.auth.login',
+        ]);
+    })->name('password.reset');
+
+    Route::post('/reset-password', function (Request $request) {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => ['required', 'confirmed', PasswordRule::min(8)->letters()->numbers()->mixedCase()->symbols()],
+        ]);
+
+        $status = Password::broker('users')->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                ])->setRememberToken(Str::random(60));
+
+                $user->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status !== Password::PasswordReset) {
+            return back()->withErrors(['email' => [__($status)]]);
+        }
+
+        // Send them to a panel they can actually reach, rather than assuming admin.
+        $user = User::where('email', $request->input('email'))->first();
+        $route = ($user && $user->canAccessPanel(Filament::getPanel('admin')))
+            ? 'filament.admin.auth.login'
+            : 'filament.staff.auth.login';
+
+        return redirect()->route($route)->with('status', __($status));
+    })->name('password.update');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])

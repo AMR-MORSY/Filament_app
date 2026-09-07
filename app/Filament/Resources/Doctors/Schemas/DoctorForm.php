@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Doctors\Schemas;
 
+use App\Filament\Forms\Components\PhoneField;
+
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -26,9 +28,7 @@ class DoctorForm
                 TextInput::make('bio')
                     ->required()
                     ->maxLength(255),
-                TextInput::make('phone')
-                    ->required()
-                    ->maxLength(255),
+                PhoneField::make('phone'),
                 TextInput::make('email')
                     ->required()
                     ->maxLength(255),

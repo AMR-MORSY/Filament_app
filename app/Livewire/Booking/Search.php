@@ -7,6 +7,7 @@ use App\Models\Doctor;
 use App\Services\AvailabilityService;
 use Carbon\Carbon;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -22,6 +23,19 @@ class Search extends Component
     #[Url]
     public string $window = 'week';
 
+    /**
+     * Which result card has its slot picker open.
+     * null = not resolved yet (the soonest result opens itself), 0 = all closed.
+     */
+    public ?int $expandedDoctorId = null;
+
+    /** Mirrors the open picker's choice so the step rail can report it. */
+    public ?string $railDate = null;
+
+    public ?string $railTime = null;
+
+    public ?int $railDuration = null;
+
     public function mount(): void
     {
         $when = request()->query('when');
@@ -36,6 +50,7 @@ class Search extends Component
     public function toggleClinic(int $clinicId): void
     {
         $this->clinicId = $this->clinicId === $clinicId ? null : $clinicId;
+        $this->resetExpansion();
     }
 
     public function toggleTimeOfDay(string $slot): void
@@ -45,6 +60,40 @@ class Search extends Component
         } else {
             $this->timeOfDay[] = $slot;
         }
+
+        $this->resetExpansion();
+    }
+
+    public function updatedWindow(): void
+    {
+        $this->resetExpansion();
+    }
+
+    /** Open one doctor's times in place, closing whichever was open. */
+    public function toggleDoctor(int $doctorId): void
+    {
+        $this->expandedDoctorId = $this->expandedDoctorId === $doctorId ? 0 : $doctorId;
+
+        $this->railDate = null;
+        $this->railTime = null;
+        $this->railDuration = null;
+    }
+
+    #[On('slot-selected')]
+    public function onSlotSelected(?string $date = null, ?string $time = null, ?int $duration = null): void
+    {
+        $this->railDate = $date;
+        $this->railTime = $time;
+        $this->railDuration = $duration;
+    }
+
+    /** After a filter change the previous selection no longer means anything. */
+    protected function resetExpansion(): void
+    {
+        $this->expandedDoctorId = null;
+        $this->railDate = null;
+        $this->railTime = null;
+        $this->railDuration = null;
     }
 
     protected function windowDays(): int
@@ -78,6 +127,12 @@ class Search extends Component
             ->filter(fn ($row) => $row->nextDay !== null)
             ->sortBy(fn ($row) => $row->nextDay->timestamp)
             ->values();
+
+        // The soonest result opens itself, so step two is already on screen.
+        // Resolving it back onto the property makes the next toggle a real toggle.
+        if ($this->expandedDoctorId === null) {
+            $this->expandedDoctorId = $doctors->first()?->doctor->id ?? 0;
+        }
 
         return view('livewire.booking.search', [
             'clinics' => $clinics,

@@ -1,43 +1,194 @@
 @import 'tailwindcss';
 @plugin "daisyui";
+
+/* ---------------------------------------------------------------------------
+   Clinic blue — palette taken from 101physio.ca.
+
+   #2b7bb9 carries every action and every bookable slot; #003e8a anchors
+   headings and hover states. Slots stay the one place saturated colour lands,
+   so an available half-hour is still the liveliest thing on any screen.
+   --------------------------------------------------------------------------- */
 @plugin "daisyui/theme" {
-    /* name: 'clinic';
+    name: 'clinic';
     default: true;
     prefersdark: false;
     color-scheme: light;
-    --color-base-100: #fbfaf7;
-    --color-base-200: #f2f1ec;
-    --color-base-300: #e6e4dd;
-    --color-base-content: #22201d;
-    --color-primary: #167c74;
+
+    --color-base-100: #ffffff; /* page and card ground */
+    --color-base-200: #f4f7fa; /* recessed panels, slot grids */
+    --color-base-300: #e3e8ee; /* hairlines, borders */
+    --color-base-content: #333333; /* body text */
+
+    --color-primary: #2b7bb9; /* actions, chosen slot */
     --color-primary-content: #ffffff;
-    --color-secondary: #22201d;
+
+    --color-secondary: #003e8a; /* deep navy — headings, hovers */
     --color-secondary-content: #ffffff;
-    --color-accent: #167c74;
-    --color-accent-content: #ffffff;
-    --color-neutral: #22201d;
-    --color-neutral-content: #fbfaf7;
-    --color-info: #0e7490;
+
+    /* Pale blue wash: the ground of an available slot, so it reads as offered
+       rather than merely present. */
+    --color-accent: #e8f1f9;
+    --color-accent-content: #003e8a;
+
+    --color-neutral: #003e8a;
+    --color-neutral-content: #ffffff;
+
+    --color-info: #3999dc;
     --color-info-content: #ffffff;
-    --color-success: #167c74;
+
+    /* Confirmed is the one state that must not be mistaken for a link. */
+    --color-success: #2f8f5b;
     --color-success-content: #ffffff;
-    --color-warning: #b08900;
+
+    --color-warning: #d98218;
     --color-warning-content: #ffffff;
-    --color-error: #c0392b;
+
+    --color-error: #ff545c;
     --color-error-content: #ffffff;
-    --radius-box: 0.75rem;
+
+    --radius-box: 0.625rem;
     --radius-field: 0.5rem;
-    --radius-selector: 0.5rem; */
+    --radius-selector: 0.5rem;
+
+    --border: 1px;
 }
+
+.input.input:focus {
+   outline:none !important;
+   border-color: var(--color-primary)!important;
+    
+
+}
+
+.select.select:open {
+   outline:none !important;
+   border-color: var(--color-primary)!important;
+    
+
+}
+
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    /* One family throughout. The three roles stay as separate variables so a
+       future change only has to touch this block. */
+    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+
+    --animate-rise: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-settle: settle 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+@layer base {
+    body {
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
 
-body {
-  background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
+    /* Poppins is a geometric face: at display sizes it needs weight and tighter
+       tracking, or headings read thin and loose. */
+    .font-display {
+        font-weight: 600;
+        letter-spacing: -0.015em;
+    }
+
+    /* Times are data. Poppins has no true monospace, so alignment is held by
+       tabular figures plus a fixed chip width rather than by the typeface. */
+    .font-mono,
+    [class*='font-mono'] {
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: 'tnum' 1;
+    }
+
+    /* One consistent focus ring across the whole funnel. */
+    :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+        border-radius: 0.25rem;
+    }
+}
+
+@layer components {
+    /* Ken Burns on the hero image. Slow enough to read as light changing in a
+       room rather than as an animation. */
+    .hero-frame img {
+        animation: kenburns 24s ease-in-out infinite alternate;
+    }
+
+    /* Scroll reveal. Paired with x-intersect, which ships inside Livewire's
+       Alpine bundle — no plugin install. */
+    .js .reveal {
+        opacity: 0;
+        transform: translateY(12px);
+        transition:
+            opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .reveal.is-in {
+        opacity: 1;
+        transform: none;
+    }
+
+}
+
+@keyframes kenburns {
+    from {
+        transform: scale(1) translate3d(0, 0, 0);
+    }
+    to {
+        transform: scale(1.08) translate3d(-1.5%, -1%, 0);
+    }
+}
+
+@keyframes rise {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes settle {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .js .reveal,
+    .reveal {
+        opacity: 1;
+        transform: none;
+    }
+
+    .hero-frame img {
+        animation: none;
+    }
 }

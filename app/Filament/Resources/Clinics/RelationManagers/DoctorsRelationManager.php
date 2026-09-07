@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Clinics\RelationManagers;
 
+use App\Support\PhoneNumber;
+
 use Filament\Actions\AssociateAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -38,6 +40,7 @@ class DoctorsRelationManager extends RelationManager
                 TextColumn::make('name')
                     ->searchable(),
                     TextColumn::make('phone')
+                    ->formatStateUsing(fn (?string $state): ?string => PhoneNumber::forDisplay($state))
                     ->searchable(),
             ])
             ->filters([

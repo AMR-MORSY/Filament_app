@@ -30,6 +30,10 @@ class StaffPanelProvider extends PanelProvider
             ->id('staff')
             ->path('staff')
             ->login()
+            ->brandLogo(asset('images/brand/mark.svg'))
+            ->brandLogoHeight('2rem')
+            ->favicon(asset('images/brand/mark.svg'))
+            ->brandName('Rowan Clinic Staff')
             ->colors([
                 'primary' => Color::Sky,
             ])
@@ -52,6 +56,7 @@ class StaffPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+               
             ])
             ->authMiddleware([
                 Authenticate::class,
